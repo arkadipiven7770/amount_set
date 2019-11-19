@@ -85,7 +85,7 @@ int asGetSize(AmountSet set){
     }
     return size;
 }
-//HELLO GIT HUB!!
+
 bool asContains(AmountSet set, ASElement element) {
     if (set == NULL || element == NULL ) return false;
     ASNode currentNode = set->head;
@@ -98,7 +98,31 @@ bool asContains(AmountSet set, ASElement element) {
 
 AmountSetResult asGetAmount(AmountSet set, ASElement element, double *outAmount){return 1;}
 
-AmountSetResult asRegister(AmountSet set, ASElement element){return 1;}
+AmountSetResult asRegister(AmountSet set, ASElement element){
+    if (set==NULL||element==NULL){
+        return AS_NULL_ARGUMENT;
+    }
+    if()
+    ASNode newElement = (ASNode)malloc(sizeof(*new));
+    newElement->amount = 0;
+    newElement->e = set->copyElement(element);
+    newElement->next = NULL;
+    AS_FOREACH(ASNode,iterator, set){
+        if(iterator->next==null){
+            newElement->prev = iterator;
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+}
 
 AmountSetResult asChangeAmount(AmountSet set, ASElement element, const double amount){return 1;}
 
