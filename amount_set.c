@@ -43,9 +43,10 @@ void asDestroy(AmountSet set){
     {
         free(set);
         return;
-    }
+            }
     if ((set->head)->next==NULL){
         set->freeElement((set->head)->e);
+        free(set);
         return;
     }
     set->freeElement((set->head)->e);
@@ -56,10 +57,9 @@ void asDestroy(AmountSet set){
 }
 
 AmountSet asCopy(AmountSet set){
-    if (!set) return NULL;
+    if (set==NULL) return NULL;
     AmountSet target = asCreate(set->copyElement, set->freeElement, set->compareElements);
-    if(!target) return NULL;
-    ASNode currentNode = set->head;
+    if(target==NULL) return NULL;
     AS_FOREACH(ASNode,iterator,set){
         if(asRegister(target, iterator->e)!=AS_SUCCESS)
         {
@@ -96,40 +96,134 @@ bool asContains(AmountSet set, ASElement element) {
     return false;
 }
 
-AmountSetResult asGetAmount(AmountSet set, ASElement element, double *outAmount){return 1;}
+AmountSetResult asGetAmount(AmountSet set, ASElement element, double *outAmount){
+   if(set==NULL||element==0||outAmount==0){
+       return AS_NULL_ARGUMENT;
+   }
+   ASNode currNode = set->head;
+   while(currNode!=NULL){
+       if(set->compareElements(currNode->e,element)==0){
+           *outAmount=currNode->amount;
+           return AS_SUCCESS;
+       }
+       currNode = currNode->next;
+   }
+   return AS_ITEM_DOES_NOT_EXIST;
+}
 
 AmountSetResult asRegister(AmountSet set, ASElement element){
     if (set==NULL||element==NULL){
         return AS_NULL_ARGUMENT;
     }
-    if()
-    ASNode newElement = (ASNode)malloc(sizeof(*new));
+    ASNode newElement = (ASNode)malloc(sizeof(*newElement));
+    if(newElement==NULL){
+        return AS_OUT_OF_MEMORY;
+    }
     newElement->amount = 0;
     newElement->e = set->copyElement(element);
     newElement->next = NULL;
-    AS_FOREACH(ASNode,iterator, set){
-        if(iterator->next==null){
-            newElement->prev = iterator;
-        }
-
+    newElement->prev = NULL;
+    if(set->head==NULL){
+        set->head= newElement;
+        return AS_SUCCESS;
     }
-
-
-
-
-
-
-
-
-
+    ASNode currNode = set->head;
+    while(currNode->next != NULL){
+        currNode = currNode->next;
+    }
+    currNode->next = newElement;
+    newElement->prev = currNode;
+return AS_SUCCESS;
 }
 
-AmountSetResult asChangeAmount(AmountSet set, ASElement element, const double amount){return 1;}
+AmountSetResult asChangeAmount(AmountSet set, ASElement element, const double amount){
+    if (set==NULL||element==NULL){
+        return AS_NULL_ARGUMENT;
+    }
+    AS_FOREACH(ASNode, iterator, set){
+        if(set->compareElements(iterator->e,element)==0){
+            if(iterator->amount+amount<0){
+                return AS_INSUFFICIENT_AMOUNT;
+            }
+            iterator->amount=iterator->amount+amount;
+            return AS_SUCCESS;
+        }
+    }
+    return AS_ITEM_DOES_NOT_EXIST;
+}
 
-AmountSetResult asDelete(AmountSet set, ASElement element){return 1;}
+AmountSetResult asDelete(AmountSet set, ASElement element){
+    if(set==NULL||element==NULL) return AS_NULL_ARGUMENT;
+    ASNode currNode = set->head;
+    while(currNode){
+        if(set->compareElements(currNode->e,element)==0){
+            (currNode->next)->prev = currNode->prev;
+            (currNode->prev)->next = currNode->next;
+            set->freeElement(currNode->e);
+            free(currNode);
+            return AS_SUCCESS;
+        }
+        currNode = currNode->next;
+    }
+    return AS_ITEM_DOES_NOT_EXIST;
+}
 
-AmountSetResult asClear(AmountSet set){return 1;}
+AmountSetResult asClear(AmountSet set){
+    if(set==NULL){
+        return AS_NULL_ARGUMENT;
+    }
+    ASNode currNode = set->head;
+    ASNode nextNode = currNode->next;
+    set->freeElement(currNode->e);
+    free(currNode);
+    while(nextNode){
+        currNode = nextNode;
+        nextNode = currNode->next;
+        set->freeElement(currNode->e);
+        free(currNode);
+    }
+    set->head = NULL;
+    return AS_SUCCESS;
+}
 
-ASElement asGetFirst(AmountSet set){return NULL;}
+ASElement asGetFirst(AmountSet set){
+    if (set==NULL||set->head==NULL){
+        return NULL;
+    }
+    ASNode First = set->head;
+    ASNode currNode = set->head;
+    while(currNode!=NULL){
+        if (set->compareElements(First->e,currNode->e)>0){
+            First = currNode;
+        }
+        currNode = currNode->next;
+    }
+    set->iterator = First;
+    return First;
+}
 
-ASElement asGetNext(AmountSet set){return NULL;}
+ASElement asGetNext(AmountSet set){
+    if (set==NULL||set->iterator==NULL){
+        return NULL;
+    }
+    ASNode NEXT = set->head;
+    ASNode currNode = set->head;
+    bool Changed = false;
+    while(NEXT){
+        if(set->compareElements((set->iterator)->e,NEXT->e)<0){
+            Changed = true;
+            break;
+        }
+        NEXT=NEXT->next;
+    }
+    if(!Changed) return NULL;
+    while(currNode!=NULL){
+        if(set->compareElements(currNode->e,(set->iterator)->e)>0&&
+                        set->compareElements(currNode->e,NEXT->e)<0){
+            NEXT=currNode;
+        }
+        currNode = currNode->next;
+    }
+    set->iterator=NEXT;
+    return NEXT;
+}
