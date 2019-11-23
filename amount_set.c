@@ -39,21 +39,14 @@ AmountSet asCreate(CopyASElement copyElement,
 
 void asDestroy(AmountSet set){
     if (set==NULL) return;
-    if(set->head==NULL)
-    {
-        free(set);
-        return;
-            }
-    if ((set->head)->next==NULL){
-        set->freeElement((set->head)->e);
-        free(set);
-        return;
+    ASNode currNode = set->head;
+    while(currNode) {
+        ASNode removeNode = currNode;
+        currNode = currNode->next;
+        set->freeElement(removeNode->e);
+        free(removeNode);
     }
-    set->freeElement((set->head)->e);
-    ASNode temp = (set->head)->next;
-    free(set->head);
-    set->head=temp;
-    asDestroy(set);
+    free(set);
 }
 
 AmountSet asCopy(AmountSet set){
@@ -92,6 +85,7 @@ bool asContains(AmountSet set, ASElement element) {
     while(currentNode){
         if (set->compareElements(element,currentNode->e)==0)
             return true;
+        currentNode=currentNode->next;
     }
     return false;
 }
@@ -114,6 +108,9 @@ AmountSetResult asGetAmount(AmountSet set, ASElement element, double *outAmount)
 AmountSetResult asRegister(AmountSet set, ASElement element){
     if (set==NULL||element==NULL){
         return AS_NULL_ARGUMENT;
+    }
+    if(asContains(set,element)){
+        return AS_ITEM_ALREADY_EXISTS;
     }
     ASNode newElement = (ASNode)malloc(sizeof(*newElement));
     if(newElement==NULL){
@@ -173,14 +170,11 @@ AmountSetResult asClear(AmountSet set){
         return AS_NULL_ARGUMENT;
     }
     ASNode currNode = set->head;
-    ASNode nextNode = currNode->next;
-    set->freeElement(currNode->e);
-    free(currNode);
-    while(nextNode){
-        currNode = nextNode;
-        nextNode = currNode->next;
-        set->freeElement(currNode->e);
-        free(currNode);
+    while(currNode) {
+        ASNode removeNode = currNode;
+        currNode = currNode->next;
+        set->freeElement(removeNode->e);
+        free(removeNode);
     }
     set->head = NULL;
     return AS_SUCCESS;
