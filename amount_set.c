@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "amount_set.h"
-#include <assert.h>
 typedef struct AS_node_t *ASNode;
 struct AS_node_t {
     ASElement e;
